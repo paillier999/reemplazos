@@ -70,3 +70,63 @@ ggplot(rem, aes(x=factor(nompro), y=dur)) +
   labs( title = "Remplazos articulares enero - noviembre 2021", subtitle = "Duración del procedimiento", 
           x="", y= "Duración (horas)", 
         caption = "Fuente: datos de C.A.S.A")
+
+
+#Creando vector solo con procedimientos primarios
+
+rem_2 <- rem %>% 
+  filter(!nompro %in% c("REVISION REEMPLAZO TOTAL DE RODILLA CON RECONSTRUCION DE LOS TRES COMPONENTES (FEMORAL TIBIAL Y PATELAR)",
+                     "REVISION REEMPLAZO TOTAL DE RODILLA CON RECONSTRUCCION DE COMPONENTE TIBIAL", 
+                     "REVISION REEMPLAZO TOTAL DE CADERA"))
+
+rem_2 <- rem_2 %>% 
+  mutate(articulación= ifelse(nompro %in% c("REEMPLAZO PARCIAL PROTESICO  DE CODO SOD",
+                                            "REEMPLAZO TOTAL PROTESICO  DE CODO SOD"),"codo", nompro))
+
+rem_2$articulación <- ifelse(rem_2$articulación %in% c("REEMPLAZO PROTESICO TOTAL PRIMARIO SIMPLE DE CADERA",
+                                                       "REEMPLAZO PROTESICO TOTAL PRIMARIO COMPLEJO DE CADERA (ARTROSIS SECUNDARIA)",
+                                                       "REEMPLAZO PARCIAL DE CADERA","REEMPLAZO PROTESICO TOTAL CON ARTRODESIS DE CADERA"),"cadera", rem_2$articulación)
+
+rem_2$articulación <- ifelse(rem_2$articulación %in% c("REEMPLAZO PROTESICO TOTAL PRIMARIO TRICOMPARTIMENTAL SIMPLE DE RODILLA",                        
+                                                       "REEMPLAZO PROTESICO TOTAL PRIMARIO TRICOMPARTIMENTAL COMPLEJO DE RODILLA (ARTROSIS SECUNDARIA)",
+                                                       "REEMPLAZO  TOTAL DE RODILLA UNICOMPARTIMENTAL (HEMIARTICULACION)",                              
+                                                       "REEMPLAZO  TOTAL DE RODILLA BICOMPARTIMENTAL"),"rodilla", rem_2$articulación)
+
+rem_2$articulación <- ifelse(rem_2$articulación %in% c("REEMPLAZO PROTESICO PRIMARIO TOTAL DE HOMBRO"),"hombro", rem_2$articulación)
+
+
+
+#procedimientos por articulación
+rem_2 %>% 
+  group_by(articulación) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+rem_2 %>% 
+  group_by(articulación) %>% 
+  count() %>% 
+  arrange(desc(n)) %>%
+  ungroup() %>% 
+  summarise(suma=sum(n))
+
+#Cálculo de tamaño muestral: Tamaño de la población:	103, proporción esperada:	2,000%,	
+# Nivel de confianza:	95,0%, Efecto de diseño:	1,5 (muestreo aleatorio estratificado por mes), presición:3.5%. Uso de Epidat.
+#44 casos
+
+rem_2 <- rem_2 %>% 
+  mutate(mes=str_sub(fechacx,4,5))
+
+rem_2$mes <- factor(rem_2$mes, levels = c("01","02","03","04","05","06","07","08",
+                                      "09","10","11"), labels = c("Ene", "Feb", "Mar",
+                                                                  "Abr", "May", "Jun", "Jul",
+                                                                  "Ago", "Sep", "Oct", "Nov"))
+
+rem_2 %>% 
+  group_by(mes) %>% 
+  count()
+
+# Muestreo aleatorio, exculyendo codo y rodillas por baja frecuencia
+
+muestra <- rem_2 %>% 
+  filter(articulación %in% c("cadera", "rodilla")) %>% 
+  sample_n(size = 44)
