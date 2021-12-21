@@ -127,6 +127,9 @@ rem_2 %>%
 
 # Muestreo aleatorio, exculyendo codo y rodillas por baja frecuencia
 
-muestra <- rem_2 %>% 
-  filter(articulación %in% c("cadera", "rodilla")) %>% 
-  sample_n(size = 44)
+#muestra <- rem_2 %>% 
+  #filter(articulación %in% c("cadera", "rodilla")) %>% 
+  #sample_n(size = 44) (luego exporto para terminar de introducir los datos.)
+
+#library(writexl)
+#write_xlsx(muestra,"muestra.xlsx")
