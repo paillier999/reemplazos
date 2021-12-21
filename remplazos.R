@@ -133,3 +133,21 @@ rem_2 %>%
 
 #library(writexl)
 #write_xlsx(muestra,"muestra.xlsx")
+
+#cargando nueva de base de datos "muestra"
+
+muestra <- read_excel("datos/muestra.xlsx")
+
+library(janitor)
+
+muestra %>% 
+ tabyl(iso) %>% 
+  adorn_totals("row")
+  
+library(DescTools)
+BinomCI(4,44,conf.level=0.95)*100
+
+muestra %>% 
+  filter(iso=="si") %>% 
+  ggplot(aes(x=mes, y=iso)) +
+  geom_col()
