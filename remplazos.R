@@ -138,6 +138,17 @@ rem_2 %>%
 
 muestra <- read_excel("datos/muestra.xlsx")
 
+muestra <- muestra %>% 
+  mutate(mes=str_sub(fechacx,4,5))
+
+muestra$mes <- as.numeric(muestra$mes)
+
+
+muestra$mes <- factor(muestra$mes, levels = c(1:11),
+                      labels = c("Ene", "Feb", "Mar","Abr", "May", "Jun", "Jul",
+                                 "Ago", "Sep", "Oct", "Nov"), 
+                      ordered = TRUE)
+
 library(janitor)
 
 muestra %>% 
@@ -149,5 +160,14 @@ BinomCI(4,44,conf.level=0.95)*100
 
 muestra %>% 
   filter(iso=="si") %>% 
-  ggplot(aes(x=mes, y=iso)) +
-  geom_col()
+  ggplot(aes(x=mes, y=iso, fill=tipoiso)) +
+  geom_col() +
+  labs(title = "Infecciones sitio operatorio", subtitle= "Reemplazos primarios de cadera y rodilla", caption= "fuente: datos de C.A.S.A") +
+  xlab("") +
+  ylab("") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+muestra %>%
+  filter(iso=="si") %>% 
+  tabyl(tipoiso) %>% 
+  adorn_totals("row")
