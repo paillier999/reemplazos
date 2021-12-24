@@ -21,6 +21,13 @@ rem %>%
   labs( title = "Remplazos articulares enero - noviembre 2021",x="", y= "", 
         caption = "Fuente: datos de C.A.S.A")
 
+tabla1 <- rem %>% 
+  group_by(nompro) %>% 
+  count() %>% 
+  arrange(desc(n))
+
+write.table(tabla1, file="Tabla1.xlsx")
+
 
 #frecuencia de realización de procedimientos por profesional
 rem %>% 
@@ -42,7 +49,7 @@ ggplot(rem, aes(x=factor(nompro), y=edad)) +
   geom_boxplot() +
   coord_flip() +
   labs( title = "Remplazos articulares enero - noviembre 2021",x="", y= "Edad", 
-        caption = "Fuente: datos de C.A.S.A")
+        caption = "Fuente: datos de C.A.S.A", tag = "Figura 1")
 
 rem %>% 
   group_by(eps) %>% 
@@ -51,7 +58,7 @@ rem %>%
   geom_bar() +
   coord_flip() +
   labs( title = "Remplazos articulares enero - noviembre 2021", subtitle = "Asegurador"
-        ,x="", y= "",caption = "Fuente: datos de C.A.S.A")
+        ,x="", y= "",caption = "Fuente: datos de C.A.S.A", tag = "Figura 2")
 
 
 rem %>% 
@@ -69,12 +76,18 @@ ggplot(rem, aes(x=factor(nompro), y=dur)) +
   coord_flip() +
   labs( title = "Remplazos articulares enero - noviembre 2021", subtitle = "Duración del procedimiento", 
           x="", y= "Duración (horas)", 
-        caption = "Fuente: datos de C.A.S.A")
+        caption = "Fuente: datos de C.A.S.A", tag = "Figura 3")
+
+rem %>% 
+  summarise(media=mean(dur), mediana = median(dur), sd=sd(dur), min=min(dur), 
+            max=max(dur))
+
+
 
 
 #Creando vector solo con procedimientos primarios
 
-rem_2 <- rem %>% 
+rem_2 <- rem %>%
   filter(!nompro %in% c("REVISION REEMPLAZO TOTAL DE RODILLA CON RECONSTRUCION DE LOS TRES COMPONENTES (FEMORAL TIBIAL Y PATELAR)",
                      "REVISION REEMPLAZO TOTAL DE RODILLA CON RECONSTRUCCION DE COMPONENTE TIBIAL", 
                      "REVISION REEMPLAZO TOTAL DE CADERA"))
@@ -125,6 +138,39 @@ rem_2 %>%
   group_by(mes) %>% 
   count()
 
+#ejemplo de muestreo estratificado con afijaciòn proporcional, los estratos son los meses
+
+rem_2 %>% 
+  group_by(mes) %>% 
+  summarise(frec=n()) %>% 
+  mutate(prop=frec/nrow(rem_2), nj=round(prop*44,))
+
+muestra_estratificada <- bind_rows(slice_sample(rem_2[rem_2$mes=="Ene",], n=6),
+slice_sample(rem_2[rem_2$mes=="Feb",], n=7),
+slice_sample(rem_2[rem_2$mes=="Mar",], n=3),
+slice_sample(rem_2[rem_2$mes=="Abr",], n=0),
+slice_sample(rem_2[rem_2$mes=="May",], n=6),
+slice_sample(rem_2[rem_2$mes=="Jun",], n=1),
+slice_sample(rem_2[rem_2$mes=="Jul",], n=4),
+slice_sample(rem_2[rem_2$mes=="Ago",], n=5),
+slice_sample(rem_2[rem_2$mes=="Sep",], n=4),
+slice_sample(rem_2[rem_2$mes=="Oct",], n=5),
+slice_sample(rem_2[rem_2$mes=="Nov",], n=4))
+
+
+#muestreo estratificado usando tablas anidadas del paquete dplyr
+
+
+muestra_estrat <- rem_2 %>% 
+  group_nest(mes) %>% 
+  rowwise() %>% 
+  mutate(samplesz = round(44*nrow(data)/nrow(rem_2)), sample = list(sample_n(data, size = samplesz))) %>% 
+  select(-c(data, samplesz)) %>% 
+  unnest(sample)
+
+
+
+
 # Muestreo aleatorio, exculyendo codo y rodillas por baja frecuencia
 
 #muestra <- rem_2 %>% 
@@ -162,7 +208,8 @@ muestra %>%
   filter(iso=="si") %>% 
   ggplot(aes(x=mes, y=iso, fill=tipoiso)) +
   geom_col() +
-  labs(title = "Infecciones sitio operatorio", subtitle= "Reemplazos primarios de cadera y rodilla", caption= "fuente: datos de C.A.S.A") +
+  labs(title = "Infecciones sitio operatorio", subtitle= "Reemplazos primarios de cadera y rodilla", caption= "fuente: datos de C.A.S.A",
+       tag = "Figura 4") +
   xlab("") +
   ylab("") +
   theme(plot.title = element_text(hjust = 0.5))
